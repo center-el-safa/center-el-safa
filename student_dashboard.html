@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الطالب - سنتر الصفا التعليمي</title>
+    <style>
+        body {
+            font-family: 'Cairo', Tahoma, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            background: #ffffff;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .welcome-text h1 {
+            color: #2c3e50;
+            margin: 0 0 5px 0;
+            font-size: 22px;
+        }
+        .welcome-text p {
+            color: #6c757d;
+            margin: 0;
+            font-size: 14px;
+        }
+        .logout-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: background 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
+        .content {
+            margin-top: 30px;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="welcome-text">
+            <h1>مرحباً بكِ، <span id="studentNameDisplay">طالبنا العزيز</span> 👋</h1>
+            <p>سنتر الصفا التعليمي - لوحة تحكم الطالب</p>
+        </div>
+        <button class="logout-btn" id="logoutBtn">تسجيل الخروج</button>
+    </div>
+
+    <div class="content">
+        <h2>أهلاً بكِ في صفحتك الدراسية</h2>
+        <p>هنا سيتم عرض جدول الحصص، الغياب، والدرجات قريباً جداً.</p>
+    </div>
+
+    <script>
+        // جلب اسم الطالب المخزن من صفحة الدخول
+        const studentName = localStorage.getItem("currentStudentName");
+        if (studentName) {
+            document.getElementById("studentNameDisplay").textContent = studentName;
+        }
+
+        // زر تسجيل الخروج
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+            localStorage.removeItem("currentStudentName");
+            window.location.href = "login.html";
+        });
+    </script>
+
+</body>
+</html>
