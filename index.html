@@ -24,19 +24,20 @@
         * { box-sizing: border-box; }
         body { font-family: Tahoma, sans-serif; background-color: #f0f4f8; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .card { background: #ffffff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); width: 100%; max-width: 450px; margin: auto; }
-        .brand-header { text-align: center; margin-bottom: 20px; }
+        .brand-header { text-align: center; margin-bottom: 20px; position: relative; }
         .brand-icon { width: 60px; height: 60px; background-color: #007bff; color: white; font-size: 16px; font-weight: bold; display: flex; justify-content: center; align-items: center; border-radius: 50%; margin: 0 auto 10px auto; }
         .form-group { margin-bottom: 15px; text-align: right; }
         label { display: block; margin-bottom: 5px; color: #495057; font-weight: bold; font-size: 13px; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 8px; font-size: 13px; font-family: Tahoma, sans-serif; }
         button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 5px; }
         button:hover { background-color: #0056b3; }
         .back-btn { background-color: #6c757d; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; margin-bottom: 15px; width: auto; display: inline-block; }
+        .logout-btn { background-color: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 6px; font-size: 11px; cursor: pointer; width: auto; display: inline-block; margin-top: 8px; }
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .menu-card { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 10px; padding: 15px 10px; text-align: center; cursor: pointer; }
         .menu-card .icon { font-size: 22px; margin-bottom: 5px; }
         .menu-card .title { font-size: 12px; font-weight: bold; color: #2c3e50; }
-        .announcement-box { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; border-radius: 8px; font-size: 12px; margin-bottom: 15px; text-align: right; }
+        .announcement-box { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; border-radius: 8px; font-size: 12px; margin-bottom: 15px; text-align: right; line-height: 1.5; }
         .sub-page, .dashboard-view, .teacher-view, .parent-view { display: none; text-align: right; }
         .custom-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
         .custom-table th, .custom-table td { border: 1px solid #dee2e6; padding: 8px 6px; text-align: center; }
@@ -46,6 +47,8 @@
         .btn-checkin { background-color: #28a745; }
         .btn-checkout { background-color: #dc3545; }
         .chat-box { background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 10px; max-height: 150px; overflow-y: auto; margin-bottom: 10px; font-size: 12px; }
+        .dev-switcher { background: #ede9fe; border: 1px solid #c4b5fd; padding: 8px; border-radius: 8px; margin-bottom: 12px; display: none; text-align: center; }
+        .dev-switcher button { width: auto; padding: 5px 10px; font-size: 11px; margin: 2px; background-color: #6f42c1; }
     </style>
 </head>
 <body>
@@ -83,8 +86,10 @@
             <div class="brand-header">
                 <h2 style="color: #2c3e50; margin: 0; font-size: 16px;">أهلاً بك، <span id="studentDisplayName"></span> 👋</h2>
                 <p id="studentGradeText" style="color: #6c757d; font-size: 11px; margin: 3px 0 0 0;"></p>
+                <button type="button" class="logout-btn" onclick="logoutUser()">تسجيل الخروج 🚪</button>
+                <button type="button" id="backToDevFromStudent" class="back-btn" style="display:none; background-color:#6f42c1; margin-right:5px;" onclick="returnToDevPanel()">⬅️ الرجوع للوحة المطورة</button>
             </div>
-            <div class="announcement-box">📢 <strong>إعلانات السنتر:</strong> يرجى متابعة جداول الامتحانات وأوقات الحصص.</div>
+            <div class="announcement-box">📢 <strong>إعلانات السنتر:</strong> <span id="studentAnnouncementText">يرجى متابعة جداول الامتحانات وأوقات الحصص.</span></div>
             <div id="studentMainMenu">
                 <div class="menu-grid">
                     <div class="menu-card" onclick="showStudentPage('pageSchedule')"><div class="icon">📅</div><div class="title">جدول الحصص</div></div>
@@ -124,8 +129,10 @@
                 <h2 style="color: #2c3e50; margin: 0; font-size: 16px;">لوحة ولي الأمر 👨‍👧</h2>
                 <p style="color: #6c757d; font-size: 11px; margin: 3px 0 0 0;">متابعة الطالب: <span id="parentTargetStudent" style="font-weight:bold; color:#007bff;"></span></p>
                 <p id="parentTargetStudentGrade" style="color: #6c757d; font-size: 10px; margin: 2px 0 0 0;"></p>
+                <button type="button" class="logout-btn" onclick="logoutUser()">تسجيل الخروج 🚪</button>
+                <button type="button" id="backToDevFromParent" class="back-btn" style="display:none; background-color:#6f42c1; margin-right:5px;" onclick="returnToDevPanel()">⬅️ الرجوع للوحة المطورة</button>
             </div>
-            <div class="announcement-box">📢 تنبيه: يمكنكم التواصل المباشر مع المعلمين عبر قسم الملاحظات.</div>
+            <div class="announcement-box">📢 <strong>إعلانات السنتر:</strong> <span id="parentAnnouncementText">يمكنكم التواصل المباشر مع المعلمين عبر قسم الملاحظات.</span></div>
             <div id="parentMainMenu">
                 <div class="menu-grid">
                     <div class="menu-card" onclick="showParentPage('parentPageExams')"><div class="icon">📊</div><div class="title">درجات الاختبارات</div></div>
@@ -161,19 +168,29 @@
             </div>
         </div>
 
-        <!-- لوحة المعلم / المدير -->
+        <!-- لوحة المعلم / المدير / مطورة السيستم -->
         <div id="teacherView" class="teacher-view">
             <div class="brand-header">
                 <h2 style="color: #2c3e50; margin: 0; font-size: 16px;"><span id="panelRoleTitle">لوحة المعلم</span>: <span id="teacherDisplayName"></span></h2>
                 <p id="teacherAssignedGradesText" style="color: #007bff; font-size: 11px; margin: 3px 0 0 0; font-weight: bold;"></p>
+                <button type="button" class="logout-btn" onclick="logoutUser()">تسجيل الخروج 🚪</button>
             </div>
+
+            <!-- شريط التنقل السريع لمطورة السيستم لمعاينة كل الواجهات -->
+            <div id="devQuickSwitcher" class="dev-switcher">
+                <div style="font-size:11px; font-weight:bold; color:#5b21b6; margin-bottom:4px;">🛠️ معاينة سريعة للواجهات (خاص بالمطورة):</div>
+                <button type="button" onclick="previewStudentAsDev()">معاينة الطالب</button>
+                <button type="button" onclick="previewParentAsDev()">معاينة ولي الأمر</button>
+            </div>
+
             <div id="teacherMainMenu">
                 <div class="menu-grid" id="teacherMenuGrid">
                     <div class="menu-card" id="cardTeacherCheckin" onclick="showTeacherPage('pageTeacherAttendance')"><div class="icon">⏱️</div><div class="title">البصمة</div></div>
                     <div class="menu-card" id="cardExamBuilder" onclick="showTeacherPage('pageCreateExam')"><div class="icon">✍️</div><div class="title">نشر اختبار</div></div>
-                    <div class="menu-card" onclick="showTeacherPage('pageStudentResults')"><div class="icon">📈</div><div class="title">درجات الطلاب</div></div>
-                    <div class="menu-card" onclick="showTeacherPage('pageStudentAbsence')"><div class="icon">📋</div><div class="title">رصد الغياب</div></div>
-                    <div class="menu-card" onclick="showTeacherPage('pageTeacherComments')"><div class="icon">💬</div><div class="title">ملاحظات أولياء الأمور</div></div>
+                    <div class="menu-card" id="cardStudentResults" onclick="showTeacherPage('pageStudentResults')"><div class="icon">📈</div><div class="title">درجات الطلاب</div></div>
+                    <div class="menu-card" id="cardStudentAbsence" onclick="showTeacherPage('pageStudentAbsence')"><div class="icon">📋</div><div class="title">رصد الغياب</div></div>
+                    <div class="menu-card" id="cardTeacherComments" onclick="showTeacherPage('pageTeacherComments')"><div class="icon">💬</div><div class="title">ملاحظات أولياء الأمور</div></div>
+                    <div class="menu-card" id="cardManagerAnnouncements" style="display:none; background:#fff3cd;" onclick="showTeacherPage('pageManagerAnnouncements')"><div class="icon">📢</div><div class="title">إعلانات السنتر</div></div>
                     <div class="menu-card" id="cardManagerAttendanceLog" style="display:none; background:#e3f2fd;" onclick="showTeacherPage('pageManagerAttendanceLog')"><div class="icon">🔍</div><div class="title">بصمات المعلمين</div></div>
                     <div class="menu-card" id="cardManagerAbsenceLog" style="display:none; background:#fce4ec;" onclick="showTeacherPage('pageManagerAbsenceLog')"><div class="icon">🚨</div><div class="title">غياب الطلاب العام</div></div>
                     <div class="menu-card" id="cardManagerParentsLog" style="display:none; background:#e8f5e9;" onclick="showTeacherPage('pageManagerParentsLog')"><div class="icon">👨‍👩‍👧</div><div class="title">أولياء الأمور</div></div>
@@ -233,6 +250,18 @@
                 <div class="form-group"><label>تعليق:</label><textarea id="teacherCommentInput" rows="2" placeholder="اكتب ملاحظة..."></textarea></div>
                 <button type="button" onclick="sendTeacherComment()">إرسال</button>
             </div>
+            <!-- صفحة إدارة إعلانات السنتر للمدير -->
+            <div id="pageManagerAnnouncements" class="sub-page">
+                <button class="back-btn" onclick="showTeacherPage('teacherMainMenu')">⬅️ الرجوع للصفحة الرئيسية</button>
+                <h3 style="font-size:13px; color:#856404; margin-top:0;">📢 تحديث إعلانات السنتر</h3>
+                <p style="font-size:11px; color:#6c757d; margin-top:0;">النص المكتوب هنا سيظهر مباشرة في لوحة جميع الطلاب وأولياء الأمور:</p>
+                <div class="form-group">
+                    <label>نص الإعلان الحالي:</label>
+                    <textarea id="managerAnnouncementInput" rows="4" placeholder="اكتب الإعلان أو التنبيه هنا..."></textarea>
+                </div>
+                <button type="button" style="background-color:#28a745;" onclick="saveCenterAnnouncement()">نشر وتحديث الإعلان</button>
+                <div id="announcementSaveMsg" style="font-size:11px; text-align:center; font-weight:bold; margin-top:8px;"></div>
+            </div>
             <div id="pageManagerAttendanceLog" class="sub-page">
                 <button class="back-btn" onclick="showTeacherPage('teacherMainMenu')">⬅️ الرجوع للصفحة الرئيسية</button>
                 <h3 style="font-size:13px; color:#007bff; margin-top:0;">🔍 بصمات المعلمين</h3>
@@ -266,11 +295,15 @@
         }
     </script>
     <script>
+        // بيانات الدخول السرية الخاصة بمطورة السيستم (يمكنك تعديلها في أي وقت)
+        const DEV_USER = "razan";
+        const DEV_PASS = "razan123";
+        const SESSION_KEY = "elsafa_saved_session";
+
         const firebaseConfig = { projectId: "center-el-safa" };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.firestore();
 
-        // جميع المراحل الدراسية المعتمدة في السنتر لحد ثالثة إعدادي
         const ALL_GRADES = [
             "الصف الرابع الابتدائي",
             "الصف الخامس الابتدائي",
@@ -280,7 +313,6 @@
             "الصف الثالث الإعدادي"
         ];
 
-        // جداول الحصص الخاصة بكل مرحلة دراسية
         const GRADE_SCHEDULES = {
             "الصف الرابع الابتدائي": [
                 { day: "الأحد", subject: "رياضيات ولغة عربية", time: "حسب المجموعة" },
@@ -326,7 +358,6 @@
             ]
         };
 
-        // دالة تعبئة جدول الحصص لأي مرحلة (للطالب وولي الأمر)
         function renderScheduleForGrade(grade, targetBodyId) {
             const tbody = document.getElementById(targetBodyId);
             if (!tbody) return;
@@ -338,6 +369,46 @@
             tbody.innerHTML = list.map(row => `<tr><td><strong>${row.day}</strong></td><td>${row.subject}</td><td>${row.time}</td></tr>`).join("");
         }
 
+        async function loadCenterAnnouncement() {
+            try {
+                const docSnap = await db.collection("settings").doc("announcement").get();
+                if (docSnap.exists && docSnap.data().text) {
+                    const text = docSnap.data().text;
+                    const stuEl = document.getElementById("studentAnnouncementText");
+                    const parEl = document.getElementById("parentAnnouncementText");
+                    const mgrInput = document.getElementById("managerAnnouncementInput");
+                    if (stuEl) stuEl.textContent = text;
+                    if (parEl) parEl.textContent = text;
+                    if (mgrInput) mgrInput.value = text;
+                }
+            } catch (e) { console.error("Error loading announcement:", e); }
+        }
+
+        async function saveCenterAnnouncement() {
+            const input = document.getElementById("managerAnnouncementInput");
+            const msg = document.getElementById("announcementSaveMsg");
+            const text = input.value.trim();
+            if (!text) {
+                msg.style.color = "red";
+                msg.textContent = "يرجى كتابة نص الإعلان أولاً!";
+                return;
+            }
+            msg.style.color = "#007bff";
+            msg.textContent = "جاري النشر...";
+            try {
+                await db.collection("settings").doc("announcement").set({
+                    text: text,
+                    updatedBy: currentUserName,
+                    updatedAt: new Date()
+                });
+                msg.style.color = "green";
+                msg.textContent = "تم تحديث الإعلان بنجاح وسيظهر لجميع الطلاب وأولياء الأمور!";
+            } catch (e) {
+                msg.style.color = "red";
+                msg.textContent = "حدث خطأ أثناء حفظ الإعلان.";
+            }
+        }
+
         const loginView = document.getElementById("loginView");
         const dashboardView = document.getElementById("dashboardView");
         const parentView = document.getElementById("parentView");
@@ -347,12 +418,14 @@
 
         let currentUserName = "", loggedInStudentGrade = "", targetStudentForParent = "", parentStudentGrade = "";
         let teacherAllowedGrades = [...ALL_GRADES];
+        let isDeveloperMode = false;
 
-        // تعبئة قوائم المراحل للمدرس بناءً على المراحل المخصصة له
-        function setupTeacherGradeDropdowns(rawGradeField, isManager) {
-            if (isManager || !rawGradeField || rawGradeField.trim() === "" || rawGradeField.trim() === "الكل") {
+        function setupTeacherGradeDropdowns(rawGradeField, hasFullAccess, isDev = false) {
+            if (hasFullAccess || !rawGradeField || rawGradeField.trim() === "" || rawGradeField.trim() === "الكل") {
                 teacherAllowedGrades = [...ALL_GRADES];
-                document.getElementById("teacherAssignedGradesText").textContent = isManager ? "صلاحيات الإدارة الكاملة" : "المراحل: جميع المراحل الدراسية";
+                document.getElementById("teacherAssignedGradesText").textContent = isDev
+                    ? "صلاحيات مطورة السيستم الشاملة (جميع المراحل والأقسام)"
+                    : (hasFullAccess ? "صلاحيات الإدارة الكاملة" : "المراحل: جميع المراحل الدراسية");
             } else {
                 const parsed = rawGradeField.split(/[,،]/).map(g => g.trim()).filter(Boolean);
                 teacherAllowedGrades = parsed.length > 0 ? parsed : [...ALL_GRADES];
@@ -401,12 +474,66 @@
             if (pageId === "teacherMainMenu") document.getElementById("teacherMainMenu").style.display = "block";
             else {
                 document.getElementById(pageId).style.display = "block";
+                if (pageId === 'pageManagerAnnouncements') {
+                    document.getElementById("announcementSaveMsg").textContent = "";
+                    loadCenterAnnouncement();
+                }
                 if (pageId === 'pageManagerAttendanceLog') loadManagerAttendanceLog();
                 if (pageId === 'pageManagerAbsenceLog') loadManagerAbsenceLog();
                 if (pageId === 'pageTeacherComments') loadTeacherComments();
                 if (pageId === 'pageManagerParentsLog') loadManagerParentsLog();
             }
         }
+
+        // دوال معاينة الواجهات الخاصة بمطورة السيستم
+        window.previewStudentAsDev = function() {
+            loggedInStudentGrade = "الصف الأول الإعدادي";
+            document.getElementById("studentDisplayName").textContent = "معاينة طالب (رزان)";
+            document.getElementById("studentGradeText").textContent = `المرحلة: ${loggedInStudentGrade}`;
+            document.getElementById("backToDevFromStudent").style.display = "inline-block";
+            renderScheduleForGrade(loggedInStudentGrade, "studentScheduleBody");
+            loadCenterAnnouncement();
+            teacherView.style.display = "none";
+            dashboardView.style.display = "block";
+            showStudentPage('studentMainMenu');
+        };
+
+        window.previewParentAsDev = function() {
+            targetStudentForParent = "مريم عماد";
+            parentStudentGrade = "الصف الرابع الابتدائي";
+            document.getElementById("parentTargetStudent").textContent = targetStudentForParent;
+            document.getElementById("parentTargetStudentGrade").textContent = `المرحلة: ${parentStudentGrade}`;
+            document.getElementById("backToDevFromParent").style.display = "inline-block";
+            renderScheduleForGrade(parentStudentGrade, "parentScheduleBody");
+            loadCenterAnnouncement();
+            teacherView.style.display = "none";
+            parentView.style.display = "block";
+            showParentPage('parentMainMenu');
+        };
+
+        window.returnToDevPanel = function() {
+            dashboardView.style.display = "none";
+            parentView.style.display = "none";
+            teacherView.style.display = "block";
+            showTeacherPage('teacherMainMenu');
+        };
+
+        // تسجيل الخروج ومسح الجلسة المحفوظة
+        window.logoutUser = function() {
+            localStorage.removeItem(SESSION_KEY);
+            isDeveloperMode = false;
+            document.getElementById("devQuickSwitcher").style.display = "none";
+            document.getElementById("backToDevFromStudent").style.display = "none";
+            document.getElementById("backToDevFromParent").style.display = "none";
+            dashboardView.style.display = "none";
+            parentView.style.display = "none";
+            teacherView.style.display = "none";
+            document.getElementById("usernameInput").value = "";
+            document.getElementById("passwordInput").value = "";
+            errorMsg.textContent = "";
+            loginView.style.display = "block";
+        };
+
         function initTeacherExamBuilder() {
             const container = document.getElementById("questionsBuilderContainer");
             let html = "";
@@ -421,50 +548,92 @@
         };
         initTeacherExamBuilder();
 
-        loginBtn.addEventListener("click", async () => {
-            const selectedRole = document.getElementById("roleSelect").value;
-            const enteredUsername = document.getElementById("usernameInput").value.trim();
-            const enteredPassword = document.getElementById("passwordInput").value.trim();
-            if (!enteredUsername || !enteredPassword) { errorMsg.textContent = "أدخل اسم المستخدم وكلمة المرور!"; return; }
-            errorMsg.style.color = "#007bff"; errorMsg.textContent = "جاري التحقق...";
+        // الدالة الموحدة لتسجيل الدخول (تستخدم عند الضغط على الزر أو عند الاستعادة التلقائية)
+        async function performLogin(selectedRole, enteredUsername, enteredPassword, isAutoRestore = false) {
+            if (!enteredUsername || !enteredPassword) {
+                if (!isAutoRestore) errorMsg.textContent = "أدخل اسم المستخدم وكلمة المرور!";
+                return;
+            }
+            if (!isAutoRestore) {
+                errorMsg.style.color = "#007bff";
+                errorMsg.textContent = "جاري التحقق...";
+            }
+
             try {
+                // 1. التحقق السري المباشر من حساب مطورة السيستم (razan / razan123)
+                if (enteredUsername.toLowerCase() === DEV_USER && enteredPassword === DEV_PASS) {
+                    isDeveloperMode = true;
+                    currentUserName = "رزان (مطورة السيستم)";
+                    document.getElementById("teacherDisplayName").textContent = currentUserName;
+                    setupTeacherGradeDropdowns("الكل", true, true);
+
+                    document.getElementById("panelRoleTitle").textContent = "لوحة التحكم الشاملة";
+                    document.getElementById("devQuickSwitcher").style.display = "block";
+                    document.getElementById("cardTeacherCheckin").style.display = "block";
+                    document.getElementById("cardExamBuilder").style.display = "block";
+                    document.getElementById("cardManagerAnnouncements").style.display = "block";
+                    document.getElementById("cardManagerAttendanceLog").style.display = "block";
+                    document.getElementById("cardManagerAbsenceLog").style.display = "block";
+                    document.getElementById("cardManagerParentsLog").style.display = "block";
+
+                    localStorage.setItem(SESSION_KEY, JSON.stringify({ role: "dev", username: enteredUsername, password: enteredPassword }));
+                    loadCenterAnnouncement();
+                    loginView.style.display = "none";
+                    teacherView.style.display = "block";
+                    showTeacherPage('teacherMainMenu');
+                    loadStudentsForAttendance();
+                    loadAllStudentsExamResults();
+                    return;
+                }
+
+                // 2. تسجيل دخول المدرس أو المدير
                 if (selectedRole === "مدرس" || selectedRole === "مدير") {
                     const snap = await db.collection("teachers").where("username", "==", enteredUsername).get();
-                    if (snap.empty) { errorMsg.style.color = "red"; errorMsg.textContent = "اسم المستخدم غير موجود!"; return; }
+                    if (snap.empty) { errorMsg.style.color = "red"; errorMsg.textContent = "اسم المستخدم غير موجود!"; localStorage.removeItem(SESSION_KEY); return; }
                     const userData = snap.docs[0].data();
-                    if (userData.password !== enteredPassword) { errorMsg.style.color = "red"; errorMsg.textContent = "كلمة المرور غير صحيحة!"; return; }
+                    if (userData.password !== enteredPassword) { errorMsg.style.color = "red"; errorMsg.textContent = "كلمة المرور غير صحيحة!"; localStorage.removeItem(SESSION_KEY); return; }
+                    
+                    isDeveloperMode = false;
+                    document.getElementById("devQuickSwitcher").style.display = "none";
                     currentUserName = userData.username;
                     document.getElementById("teacherDisplayName").textContent = currentUserName;
                     
                     const isManager = (selectedRole === "مدير");
-                    setupTeacherGradeDropdowns(userData.grade, isManager);
+                    setupTeacherGradeDropdowns(userData.grade, isManager, false);
 
                     if (isManager) {
                         document.getElementById("panelRoleTitle").textContent = "لوحة المدير";
                         document.getElementById("cardTeacherCheckin").style.display = "none";
                         document.getElementById("cardExamBuilder").style.display = "none";
+                        document.getElementById("cardManagerAnnouncements").style.display = "block";
                         document.getElementById("cardManagerAttendanceLog").style.display = "block";
                         document.getElementById("cardManagerAbsenceLog").style.display = "block";
                         document.getElementById("cardManagerParentsLog").style.display = "block";
+                        loadCenterAnnouncement();
                     } else {
                         document.getElementById("panelRoleTitle").textContent = "لوحة المعلم";
                         document.getElementById("cardTeacherCheckin").style.display = "block";
                         document.getElementById("cardExamBuilder").style.display = "block";
+                        document.getElementById("cardManagerAnnouncements").style.display = "none";
                         document.getElementById("cardManagerAttendanceLog").style.display = "none";
                         document.getElementById("cardManagerAbsenceLog").style.display = "none";
                         document.getElementById("cardManagerParentsLog").style.display = "none";
                     }
+
+                    localStorage.setItem(SESSION_KEY, JSON.stringify({ role: selectedRole, username: enteredUsername, password: enteredPassword }));
                     loginView.style.display = "none"; teacherView.style.display = "block";
                     showTeacherPage('teacherMainMenu'); loadStudentsForAttendance(); loadAllStudentsExamResults();
+
+                // 3. تسجيل دخول ولي الأمر
                 } else if (selectedRole === "ولي أمر") {
                     const snap = await db.collection("family").where("username", "==", enteredUsername).get();
-                    if (snap.empty) { errorMsg.style.color = "red"; errorMsg.textContent = "اسم المستخدم غير موجود!"; return; }
+                    if (snap.empty) { errorMsg.style.color = "red"; errorMsg.textContent = "اسم المستخدم غير موجود!"; localStorage.removeItem(SESSION_KEY); return; }
                     const parentData = snap.docs[0].data();
-                    if (parentData.password !== enteredPassword) { errorMsg.style.color = "red"; errorMsg.textContent = "كلمة المرور غير صحيحة!"; return; }
+                    if (parentData.password !== enteredPassword) { errorMsg.style.color = "red"; errorMsg.textContent = "كلمة المرور غير صحيحة!"; localStorage.removeItem(SESSION_KEY); return; }
+                    
                     targetStudentForParent = parentData.studentName || "مريم عماد";
                     document.getElementById("parentTargetStudent").textContent = targetStudentForParent;
                     
-                    // جلب مرحلة الطالب تلقائياً لعرض جدول حصصه لولي الأمر
                     const studentSnap = await db.collection("users").where("username", "==", targetStudentForParent).get();
                     if (!studentSnap.empty) {
                         parentStudentGrade = studentSnap.docs[0].data().grade || "الصف الرابع الابتدائي";
@@ -473,24 +642,61 @@
                     }
                     document.getElementById("parentTargetStudentGrade").textContent = `المرحلة: ${parentStudentGrade}`;
                     renderScheduleForGrade(parentStudentGrade, "parentScheduleBody");
+                    await loadCenterAnnouncement();
 
+                    localStorage.setItem(SESSION_KEY, JSON.stringify({ role: selectedRole, username: enteredUsername, password: enteredPassword }));
                     loginView.style.display = "none"; parentView.style.display = "block";
                     showParentPage('parentMainMenu');
+
+                // 4. تسجيل دخول الطالب
                 } else {
                     const snap = await db.collection("users").where("username", "==", enteredUsername).get();
-                    if (snap.empty) { errorMsg.style.color = "red"; errorMsg.textContent = "اسم المستخدم غير موجود!"; return; }
+                    if (snap.empty) { errorMsg.style.color = "red"; errorMsg.textContent = "اسم المستخدم غير موجود!"; localStorage.removeItem(SESSION_KEY); return; }
                     const userData = snap.docs[0].data();
-                    if (userData.password !== enteredPassword) { errorMsg.style.color = "red"; errorMsg.textContent = "كلمة المرور غير صحيحة!"; return; }
+                    if (userData.password !== enteredPassword) { errorMsg.style.color = "red"; errorMsg.textContent = "كلمة المرور غير صحيحة!"; localStorage.removeItem(SESSION_KEY); return; }
+                    
                     currentUserName = userData.username;
                     loggedInStudentGrade = userData.grade || "الصف الرابع الابتدائي";
                     document.getElementById("studentDisplayName").textContent = currentUserName;
                     document.getElementById("studentGradeText").textContent = `المرحلة: ${loggedInStudentGrade}`;
                     renderScheduleForGrade(loggedInStudentGrade, "studentScheduleBody");
+                    await loadCenterAnnouncement();
+
+                    localStorage.setItem(SESSION_KEY, JSON.stringify({ role: selectedRole, username: enteredUsername, password: enteredPassword }));
                     loginView.style.display = "none"; dashboardView.style.display = "block";
                     showStudentPage('studentMainMenu');
                     loadActiveExamForStudent(); loadStudentAbsenceReports(currentUserName); loadStudentExamGrades(currentUserName);
                 }
-            } catch (err) { errorMsg.style.color = "red"; errorMsg.textContent = "خطأ في الاتصال بقاعدة البيانات."; }
+            } catch (err) {
+                if (!isAutoRestore) {
+                    errorMsg.style.color = "red";
+                    errorMsg.textContent = "خطأ في الاتصال بقاعدة البيانات.";
+                }
+            }
+        }
+
+        loginBtn.addEventListener("click", () => {
+            const selectedRole = document.getElementById("roleSelect").value;
+            const enteredUsername = document.getElementById("usernameInput").value.trim();
+            const enteredPassword = document.getElementById("passwordInput").value.trim();
+            performLogin(selectedRole, enteredUsername, enteredPassword, false);
+        });
+
+        // استعادة الجلسة تلقائياً عند فتح الرابط أو مسح الـ QR Code
+        window.addEventListener("DOMContentLoaded", () => {
+            const saved = localStorage.getItem(SESSION_KEY);
+            if (saved) {
+                try {
+                    const session = JSON.parse(saved);
+                    if (session.username && session.password) {
+                        errorMsg.style.color = "#007bff";
+                        errorMsg.textContent = "جاري استعادة حسابك تلقائياً...";
+                        performLogin(session.role, session.username, session.password, true);
+                    }
+                } catch (e) {
+                    localStorage.removeItem(SESSION_KEY);
+                }
+            }
         });
 
         async function loadActiveExamForStudent() {
