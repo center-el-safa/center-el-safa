@@ -46,7 +46,8 @@
         .attendance-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .btn-checkin { background-color: #28a745; }
         .btn-checkout { background-color: #dc3545; }
-        .chat-box { background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 10px; max-height: 150px; overflow-y: auto; margin-bottom: 10px; font-size: 12px; }
+        .chat-box { background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 10px; max-height: 170px; overflow-y: auto; margin-bottom: 10px; font-size: 12px; }
+        .chat-msg { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 8px; margin-bottom: 6px; line-height: 1.4; }
         .dev-switcher { background: #ede9fe; border: 1px solid #c4b5fd; padding: 8px; border-radius: 8px; margin-bottom: 12px; display: none; text-align: center; }
         .dev-switcher button { width: auto; padding: 5px 10px; font-size: 11px; margin: 2px; background-color: #6f42c1; }
     </style>
@@ -161,10 +162,20 @@
             </div>
             <div id="parentPageComments" class="sub-page">
                 <button class="back-btn" onclick="showParentPage('parentMainMenu')">⬅️ الرجوع للصفحة الرئيسية</button>
-                <h3 style="font-size:13px; color:#007bff; margin-top:0;">💬 ملاحظات المعلمين</h3>
+                <h3 style="font-size:13px; color:#007bff; margin-top:0;">💬 إرسال ملاحظة لمدرس</h3>
                 <div class="chat-box" id="parentChatBox">جاري التحميل...</div>
-                <div class="form-group"><textarea id="parentCommentInput" rows="2" placeholder="اكتب تعليقاً..."></textarea></div>
-                <button type="button" onclick="sendParentComment()">إرسال</button>
+                <div class="form-group">
+                    <label>اختر المدرس المستلم:</label>
+                    <select id="parentTeacherSelect">
+                        <option value="">جاري تحميل أسماء المدرسين...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>نص الملاحظة:</label>
+                    <textarea id="parentCommentInput" rows="2" placeholder="اكتب ملاحظتك أو استفسارك للمدرس..."></textarea>
+                </div>
+                <button type="button" onclick="sendParentComment()">إرسال الملاحظة للمدرس</button>
+                <div id="parentCommentMsg" style="font-size:11px; text-align:center; font-weight:bold; margin-top:6px;"></div>
             </div>
         </div>
 
@@ -248,7 +259,11 @@
                 <button class="back-btn" onclick="showTeacherPage('teacherMainMenu')">⬅️ الرجوع للصفحة الرئيسية</button>
                 <h3 style="font-size:13px; color:#007bff; margin-top:0;">💬 ملاحظات أولياء الأمور</h3>
                 <div class="chat-box" id="teacherChatBox">جاري التحميل...</div>
-                <div class="form-group"><label>تعليق:</label><textarea id="teacherCommentInput" rows="2" placeholder="اكتب ملاحظة..."></textarea></div>
+                <div class="form-group">
+                    <label>اختر الطالب للرد على ولي أمره:</label>
+                    <select id="teacherReplyStudentSelect"></select>
+                </div>
+                <div class="form-group"><label>تعليق أو رد:</label><textarea id="teacherCommentInput" rows="2" placeholder="اكتب ملاحظة لولي الأمر..."></textarea></div>
                 <button type="button" onclick="sendTeacherComment()">إرسال</button>
             </div>
             <!-- صفحة إضافة حسابات جديدة للمدير والمطورة -->
@@ -279,10 +294,16 @@
                     <label>اسم الطالب التابع له (يجب أن يطابق اسم الطالب المسجل):</label>
                     <input type="text" id="newAccStudentName" placeholder="مثال: مريم عماد">
                 </div>
-                <div class="form-group" id="newAccTeacherGradesWrapper" style="display:none;">
-                    <label>المراحل المخصصة للمدرس:</label>
-                    <input type="text" id="newAccTeacherGrades" value="الكل" placeholder="اكتب الكل أو اسم المرحلة">
-                    <small style="color:#6c757d; font-size:10px;">اكتبي "الكل" لفتح كل المراحل أو اكتبي أسماء المراحل مفصولة بفاصلة.</small>
+                <div id="newAccTeacherWrapper" style="display:none;">
+                    <div class="form-group">
+                        <label>المادة الدراسية للمدرس:</label>
+                        <input type="text" id="newAccTeacherSubject" placeholder="مثال: رياضيات / لغة عربية / علوم">
+                    </div>
+                    <div class="form-group">
+                        <label>المراحل المخصصة للمدرس:</label>
+                        <input type="text" id="newAccTeacherGrades" value="الكل" placeholder="اكتب الكل أو اسم المرحلة">
+                        <small style="color:#6c757d; font-size:10px;">اكتبي "الكل" لفتح كل المراحل أو اكتبي أسماء المراحل مفصولة بفاصلة.</small>
+                    </div>
                 </div>
                 <button type="button" style="background-color:#28a745;" onclick="createNewAccountInFirebase()">حفظ وإضافة الحساب</button>
                 <div id="newAccMsg" style="font-size:11px; text-align:center; font-weight:bold; margin-top:8px;"></div>
@@ -332,7 +353,6 @@
         }
     </script>
     <script>
-        // بيانات الدخول السرية الخاصة بمطورة السيستم (يمكنك تعديلها في أي وقت)
         const DEV_USER = "razan";
         const DEV_PASS = "razan123";
         const SESSION_KEY = "elsafa_saved_session";
@@ -395,7 +415,6 @@
             ]
         };
 
-        // تعبئة قائمة المراحل في نموذج إضافة طالب جديد
         (function initNewAccountGrades() {
             const sel = document.getElementById("newAccGradeSelect");
             if (sel) {
@@ -412,7 +431,7 @@
             const role = document.getElementById("newAccRole").value;
             document.getElementById("newAccGradeWrapper").style.display = (role === "طالب") ? "block" : "none";
             document.getElementById("newAccStudentWrapper").style.display = (role === "ولي أمر") ? "block" : "none";
-            document.getElementById("newAccTeacherGradesWrapper").style.display = (role === "مدرس") ? "block" : "none";
+            document.getElementById("newAccTeacherWrapper").style.display = (role === "مدرس") ? "block" : "none";
             document.getElementById("newAccMsg").textContent = "";
         };
 
@@ -457,6 +476,7 @@
                     }
                     await db.collection("family").add({ username, password, studentName, createdAt: new Date() });
                 } else if (role === "مدرس") {
+                    const subject = document.getElementById("newAccTeacherSubject").value.trim();
                     const teacherGrades = document.getElementById("newAccTeacherGrades").value.trim() || "الكل";
                     const exists = await db.collection("teachers").where("username", "==", username).get();
                     if (!exists.empty) {
@@ -464,7 +484,7 @@
                         msg.textContent = "اسم المدرس مسجل بالفعل!";
                         return;
                     }
-                    await db.collection("teachers").add({ username, password, grade: teacherGrades, createdAt: new Date() });
+                    await db.collection("teachers").add({ username, password, subject, grade: teacherGrades, createdAt: new Date() });
                 }
 
                 msg.style.color = "green";
@@ -472,6 +492,7 @@
                 document.getElementById("newAccUsername").value = "";
                 document.getElementById("newAccPassword").value = "";
                 document.getElementById("newAccStudentName").value = "";
+                document.getElementById("newAccTeacherSubject").value = "";
             } catch (e) {
                 msg.style.color = "red";
                 msg.textContent = "حدث خطأ أثناء حفظ الحساب في فايربيس.";
@@ -539,6 +560,7 @@
         let currentUserName = "", loggedInStudentGrade = "", targetStudentForParent = "", parentStudentGrade = "";
         let teacherAllowedGrades = [...ALL_GRADES];
         let isDeveloperMode = false;
+        let isManagerMode = false;
 
         function setupTeacherGradeDropdowns(rawGradeField, hasFullAccess, isDev = false) {
             if (hasFullAccess || !rawGradeField || rawGradeField.trim() === "" || rawGradeField.trim() === "الكل") {
@@ -585,7 +607,11 @@
                 if (pageId === 'parentPageExams') loadParentExamGrades(targetStudentForParent);
                 if (pageId === 'parentPageAbsence') loadParentAbsenceReports(targetStudentForParent);
                 if (pageId === 'parentPageSchedule') renderScheduleForGrade(parentStudentGrade, "parentScheduleBody");
-                if (pageId === 'parentPageComments') loadParentComments(targetStudentForParent);
+                if (pageId === 'parentPageComments') {
+                    document.getElementById("parentCommentMsg").textContent = "";
+                    loadTeachersListForParent();
+                    loadParentComments(targetStudentForParent);
+                }
             }
         }
         function showTeacherPage(pageId) {
@@ -603,7 +629,10 @@
                 }
                 if (pageId === 'pageManagerAttendanceLog') loadManagerAttendanceLog();
                 if (pageId === 'pageManagerAbsenceLog') loadManagerAbsenceLog();
-                if (pageId === 'pageTeacherComments') loadTeacherComments();
+                if (pageId === 'pageTeacherComments') {
+                    loadStudentsForTeacherReply();
+                    loadTeacherComments();
+                }
                 if (pageId === 'pageManagerParentsLog') loadManagerParentsLog();
             }
         }
@@ -643,6 +672,7 @@
         window.logoutUser = function() {
             localStorage.removeItem(SESSION_KEY);
             isDeveloperMode = false;
+            isManagerMode = false;
             document.getElementById("devQuickSwitcher").style.display = "none";
             document.getElementById("backToDevFromStudent").style.display = "none";
             document.getElementById("backToDevFromParent").style.display = "none";
@@ -680,9 +710,9 @@
             }
 
             try {
-                // 1. التحقق السري المباشر من حساب مطورة السيستم (razan / razan123)
                 if (enteredUsername.toLowerCase() === DEV_USER && enteredPassword === DEV_PASS) {
                     isDeveloperMode = true;
+                    isManagerMode = true;
                     currentUserName = "رزان (مطورة السيستم)";
                     document.getElementById("teacherDisplayName").textContent = currentUserName;
                     setupTeacherGradeDropdowns("الكل", true, true);
@@ -707,7 +737,6 @@
                     return;
                 }
 
-                // 2. تسجيل دخول المدرس أو المدير
                 if (selectedRole === "مدرس" || selectedRole === "مدير") {
                     const snap = await db.collection("teachers").where("username", "==", enteredUsername).get();
                     if (snap.empty) { errorMsg.style.color = "red"; errorMsg.textContent = "اسم المستخدم غير موجود!"; localStorage.removeItem(SESSION_KEY); return; }
@@ -720,6 +749,7 @@
                     document.getElementById("teacherDisplayName").textContent = currentUserName;
                     
                     const isManager = (selectedRole === "مدير");
+                    isManagerMode = isManager;
                     setupTeacherGradeDropdowns(userData.grade, isManager, false);
 
                     if (isManager) {
@@ -747,7 +777,6 @@
                     loginView.style.display = "none"; teacherView.style.display = "block";
                     showTeacherPage('teacherMainMenu'); loadStudentsForAttendance(); loadAllStudentsExamResults();
 
-                // 3. تسجيل دخول ولي الأمر
                 } else if (selectedRole === "ولي أمر") {
                     const snap = await db.collection("family").where("username", "==", enteredUsername).get();
                     if (snap.empty) { errorMsg.style.color = "red"; errorMsg.textContent = "اسم المستخدم غير موجود!"; localStorage.removeItem(SESSION_KEY); return; }
@@ -771,7 +800,6 @@
                     loginView.style.display = "none"; parentView.style.display = "block";
                     showParentPage('parentMainMenu');
 
-                // 4. تسجيل دخول الطالب
                 } else {
                     const snap = await db.collection("users").where("username", "==", enteredUsername).get();
                     if (snap.empty) { errorMsg.style.color = "red"; errorMsg.textContent = "اسم المستخدم غير موجود!"; localStorage.removeItem(SESSION_KEY); return; }
@@ -896,26 +924,89 @@
             } catch (e) { container.innerHTML = "تعذر التحميل."; }
         }
 
+        // جلب أسماء كل المدرسين مع موادهم في قائمة ولي الأمر
+        async function loadTeachersListForParent() {
+            const sel = document.getElementById("parentTeacherSelect");
+            if (!sel) return;
+            sel.innerHTML = "<option value=''>جاري تحميل المدرسين...</option>";
+            try {
+                const snap = await db.collection("teachers").get();
+                sel.innerHTML = "<option value=''>-- اختر اسم المدرس --</option>";
+                let count = 0;
+                snap.forEach(doc => {
+                    const t = doc.data();
+                    if (t.username && t.role !== "مدير" && !t.username.includes("مدير")) {
+                        const opt = document.createElement("option");
+                        opt.value = t.username;
+                        const subjectLabel = (t.subject && t.subject.trim() !== "") ? ` - ${t.subject.trim()}` : "";
+                        opt.textContent = `أ/ ${t.username}${subjectLabel}`;
+                        sel.appendChild(opt);
+                        count++;
+                    }
+                });
+                if (count === 0) {
+                    sel.innerHTML = "<option value=''>لا يوجد مدرسون مسجلون حالياً</option>";
+                }
+            } catch (e) {
+                sel.innerHTML = "<option value=''>تعذر تحميل قائمة المدرسين</option>";
+            }
+        }
+
         async function loadParentComments(studentName) {
             const chatBox = document.getElementById("parentChatBox");
             try {
                 const snap = await db.collection("comments").where("studentName", "==", studentName).orderBy("timestamp", "asc").get();
-                if (snap.empty) { chatBox.innerHTML = "لا توجد تعليقات."; return; }
+                if (snap.empty) { chatBox.innerHTML = "لا توجد ملاحظات سابقة."; return; }
                 let html = "";
-                snap.forEach(doc => { const c = doc.data(); html += `<div style="margin-bottom:4px;"><strong>${c.sender}:</strong> ${c.text}</div>`; });
+                snap.forEach(doc => {
+                    const c = doc.data();
+                    const teacherTag = c.teacherName ? ` <span style="color:#007bff; font-size:11px;">(إلى ${c.teacherDisplay || ('أ/ ' + c.teacherName)})</span>` : "";
+                    html += `<div class="chat-msg"><strong>${c.sender}${teacherTag}:</strong> ${c.text}</div>`;
+                });
                 chatBox.innerHTML = html; chatBox.scrollTop = chatBox.scrollHeight;
             } catch (e) { chatBox.innerHTML = "تعذر التحميل."; }
         }
 
         async function sendParentComment() {
+            const sel = document.getElementById("parentTeacherSelect");
+            const selectedTeacher = sel.value;
+            const selectedTeacherDisplay = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : "";
             const text = document.getElementById("parentCommentInput").value.trim();
-            if (!text) { alert("اكتب تعليقاً أولاً!"); return; }
+            const msg = document.getElementById("parentCommentMsg");
+
+            if (!selectedTeacher) {
+                msg.style.color = "red";
+                msg.textContent = "يرجى اختيار اسم المدرس أولاً!";
+                return;
+            }
+            if (!text) {
+                msg.style.color = "red";
+                msg.textContent = "اكتب نص الملاحظة أولاً!";
+                return;
+            }
+
+            msg.style.color = "#007bff";
+            msg.textContent = "جاري الإرسال للمدرس...";
+
             try {
                 const now = new Date();
-                await db.collection("comments").add({ studentName: targetStudentForParent, sender: "ولي الأمر", text: text, date: now.toLocaleDateString('ar-EG'), timestamp: now });
+                await db.collection("comments").add({
+                    studentName: targetStudentForParent,
+                    teacherName: selectedTeacher,
+                    teacherDisplay: selectedTeacherDisplay,
+                    sender: "ولي الأمر",
+                    text: text,
+                    date: now.toLocaleDateString('ar-EG'),
+                    timestamp: now
+                });
                 document.getElementById("parentCommentInput").value = "";
+                msg.style.color = "green";
+                msg.textContent = `تم إرسال الملاحظة إلى (${selectedTeacherDisplay}) بنجاح!`;
                 loadParentComments(targetStudentForParent);
-            } catch (err) { alert("فشل الإرسال."); }
+            } catch (err) {
+                msg.style.color = "red";
+                msg.textContent = "فشل إرسال الملاحظة.";
+            }
         }
 
         async function saveAndSendExam() {
@@ -981,23 +1072,62 @@
             } catch (err) { msg.style.color = "red"; msg.textContent = "فشل الإرسال."; }
         }
 
+        async function loadStudentsForTeacherReply() {
+            const sel = document.getElementById("teacherReplyStudentSelect");
+            if (!sel) return;
+            try {
+                const snap = await db.collection("users").get();
+                sel.innerHTML = "";
+                snap.forEach(doc => {
+                    const s = doc.data();
+                    if (s.username && teacherAllowedGrades.includes(s.grade)) {
+                        const opt = document.createElement("option");
+                        opt.value = s.username;
+                        opt.textContent = `${s.username} (${s.grade})`;
+                        sel.appendChild(opt);
+                    }
+                });
+                if (sel.options.length === 0) {
+                    const opt = document.createElement("option");
+                    opt.value = "مريم عماد";
+                    opt.textContent = "مريم عماد";
+                    sel.appendChild(opt);
+                }
+            } catch (e) {}
+        }
+
         async function loadTeacherComments() {
             const chatBox = document.getElementById("teacherChatBox");
             try {
                 const snap = await db.collection("comments").orderBy("timestamp", "asc").get();
-                if (snap.empty) { chatBox.innerHTML = "لا توجد تعليقات."; return; }
+                if (snap.empty) { chatBox.innerHTML = "لا توجد ملاحظات."; return; }
                 let html = "";
-                snap.forEach(doc => { const c = doc.data(); html += `<div style="margin-bottom:4px;"><strong>${c.studentName} (${c.sender}):</strong> ${c.text}</div>`; });
-                chatBox.innerHTML = html; chatBox.scrollTop = chatBox.scrollHeight;
+                snap.forEach(doc => {
+                    const c = doc.data();
+                    if (isManagerMode || isDeveloperMode || !c.teacherName || c.teacherName === currentUserName) {
+                        const toTag = c.teacherName ? ` <span style="color:#007bff; font-size:11px;">[لـ ${c.teacherDisplay || ('أ/ ' + c.teacherName)}]</span>` : "";
+                        html += `<div class="chat-msg"><strong>${c.studentName} - ${c.sender}${toTag}:</strong> ${c.text}</div>`;
+                    }
+                });
+                chatBox.innerHTML = html || "لا توجد ملاحظات موجهة لك حالياً.";
+                chatBox.scrollTop = chatBox.scrollHeight;
             } catch (e) { chatBox.innerHTML = "تعذر التحميل."; }
         }
 
         async function sendTeacherComment() {
+            const studentName = document.getElementById("teacherReplyStudentSelect").value || "مريم عماد";
             const text = document.getElementById("teacherCommentInput").value.trim();
             if (!text) { alert("اكتب تعليقاً أولاً!"); return; }
             try {
                 const now = new Date();
-                await db.collection("comments").add({ studentName: "مريم عماد", sender: "المدرس", text: text, date: now.toLocaleDateString('ar-EG'), timestamp: now });
+                await db.collection("comments").add({
+                    studentName: studentName,
+                    teacherName: currentUserName,
+                    sender: `أ/ ${currentUserName}`,
+                    text: text,
+                    date: now.toLocaleDateString('ar-EG'),
+                    timestamp: now
+                });
                 document.getElementById("teacherCommentInput").value = "";
                 loadTeacherComments();
             } catch (err) { alert("فشل الإرسال."); }
@@ -1048,4 +1178,4 @@
         document.getElementById("checkOutBtn").addEventListener("click", () => recordTeacherAttendance("انصراف"));
     </script>
 </body>
-</html>
+</html>ر
