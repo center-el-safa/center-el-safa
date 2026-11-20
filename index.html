@@ -190,6 +190,7 @@
                     <div class="menu-card" id="cardStudentResults" onclick="showTeacherPage('pageStudentResults')"><div class="icon">📈</div><div class="title">درجات الطلاب</div></div>
                     <div class="menu-card" id="cardStudentAbsence" onclick="showTeacherPage('pageStudentAbsence')"><div class="icon">📋</div><div class="title">رصد الغياب</div></div>
                     <div class="menu-card" id="cardTeacherComments" onclick="showTeacherPage('pageTeacherComments')"><div class="icon">💬</div><div class="title">ملاحظات أولياء الأمور</div></div>
+                    <div class="menu-card" id="cardManagerAddAccount" style="display:none; background:#e0f2fe;" onclick="showTeacherPage('pageManagerAddAccount')"><div class="icon">➕</div><div class="title">إضافة حسابات</div></div>
                     <div class="menu-card" id="cardManagerAnnouncements" style="display:none; background:#fff3cd;" onclick="showTeacherPage('pageManagerAnnouncements')"><div class="icon">📢</div><div class="title">إعلانات السنتر</div></div>
                     <div class="menu-card" id="cardManagerAttendanceLog" style="display:none; background:#e3f2fd;" onclick="showTeacherPage('pageManagerAttendanceLog')"><div class="icon">🔍</div><div class="title">بصمات المعلمين</div></div>
                     <div class="menu-card" id="cardManagerAbsenceLog" style="display:none; background:#fce4ec;" onclick="showTeacherPage('pageManagerAbsenceLog')"><div class="icon">🚨</div><div class="title">غياب الطلاب العام</div></div>
@@ -249,6 +250,42 @@
                 <div class="chat-box" id="teacherChatBox">جاري التحميل...</div>
                 <div class="form-group"><label>تعليق:</label><textarea id="teacherCommentInput" rows="2" placeholder="اكتب ملاحظة..."></textarea></div>
                 <button type="button" onclick="sendTeacherComment()">إرسال</button>
+            </div>
+            <!-- صفحة إضافة حسابات جديدة للمدير والمطورة -->
+            <div id="pageManagerAddAccount" class="sub-page">
+                <button class="back-btn" onclick="showTeacherPage('teacherMainMenu')">⬅️ الرجوع للصفحة الرئيسية</button>
+                <h3 style="font-size:13px; color:#0369a1; margin-top:0;">➕ إضافة حساب جديد في السيستم</h3>
+                <div class="form-group">
+                    <label>نوع الحساب:</label>
+                    <select id="newAccRole" onchange="toggleNewAccountFields()">
+                        <option value="طالب">طالب</option>
+                        <option value="ولي أمر">ولي أمر</option>
+                        <option value="مدرس">مدرس</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>اسم المستخدم (للدخول):</label>
+                    <input type="text" id="newAccUsername" placeholder="مثال: أحمد محمد">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور:</label>
+                    <input type="text" id="newAccPassword" placeholder="مثال: 12345">
+                </div>
+                <div class="form-group" id="newAccGradeWrapper">
+                    <label>المرحلة الدراسية:</label>
+                    <select id="newAccGradeSelect"></select>
+                </div>
+                <div class="form-group" id="newAccStudentWrapper" style="display:none;">
+                    <label>اسم الطالب التابع له (يجب أن يطابق اسم الطالب المسجل):</label>
+                    <input type="text" id="newAccStudentName" placeholder="مثال: مريم عماد">
+                </div>
+                <div class="form-group" id="newAccTeacherGradesWrapper" style="display:none;">
+                    <label>المراحل المخصصة للمدرس:</label>
+                    <input type="text" id="newAccTeacherGrades" value="الكل" placeholder="اكتب الكل أو اسم المرحلة">
+                    <small style="color:#6c757d; font-size:10px;">اكتبي "الكل" لفتح كل المراحل أو اكتبي أسماء المراحل مفصولة بفاصلة.</small>
+                </div>
+                <button type="button" style="background-color:#28a745;" onclick="createNewAccountInFirebase()">حفظ وإضافة الحساب</button>
+                <div id="newAccMsg" style="font-size:11px; text-align:center; font-weight:bold; margin-top:8px;"></div>
             </div>
             <!-- صفحة إدارة إعلانات السنتر للمدير -->
             <div id="pageManagerAnnouncements" class="sub-page">
@@ -356,6 +393,89 @@
                 { day: "الأربعاء", subject: "رياضيات ودراسات", time: "حسب المجموعة" },
                 { day: "الخميس", subject: "لغة عربية وعلوم", time: "حسب المجموعة" }
             ]
+        };
+
+        // تعبئة قائمة المراحل في نموذج إضافة طالب جديد
+        (function initNewAccountGrades() {
+            const sel = document.getElementById("newAccGradeSelect");
+            if (sel) {
+                ALL_GRADES.forEach(g => {
+                    const opt = document.createElement("option");
+                    opt.value = g;
+                    opt.textContent = g;
+                    sel.appendChild(opt);
+                });
+            }
+        })();
+
+        window.toggleNewAccountFields = function() {
+            const role = document.getElementById("newAccRole").value;
+            document.getElementById("newAccGradeWrapper").style.display = (role === "طالب") ? "block" : "none";
+            document.getElementById("newAccStudentWrapper").style.display = (role === "ولي أمر") ? "block" : "none";
+            document.getElementById("newAccTeacherGradesWrapper").style.display = (role === "مدرس") ? "block" : "none";
+            document.getElementById("newAccMsg").textContent = "";
+        };
+
+        window.createNewAccountInFirebase = async function() {
+            const role = document.getElementById("newAccRole").value;
+            const username = document.getElementById("newAccUsername").value.trim();
+            const password = document.getElementById("newAccPassword").value.trim();
+            const msg = document.getElementById("newAccMsg");
+
+            if (!username || !password) {
+                msg.style.color = "red";
+                msg.textContent = "يرجى إدخال اسم المستخدم وكلمة المرور!";
+                return;
+            }
+
+            msg.style.color = "#007bff";
+            msg.textContent = "جاري الحفظ في قاعدة البيانات...";
+
+            try {
+                if (role === "طالب") {
+                    const grade = document.getElementById("newAccGradeSelect").value;
+                    const exists = await db.collection("users").where("username", "==", username).get();
+                    if (!exists.empty) {
+                        msg.style.color = "red";
+                        msg.textContent = "اسم الطالب مسجل بالفعل! اختر اسماً مختلفاً.";
+                        return;
+                    }
+                    await db.collection("users").add({ username, password, grade, createdAt: new Date() });
+                    loadStudentsForAttendance();
+                } else if (role === "ولي أمر") {
+                    const studentName = document.getElementById("newAccStudentName").value.trim();
+                    if (!studentName) {
+                        msg.style.color = "red";
+                        msg.textContent = "يرجى كتابة اسم الطالب التابع له ولي الأمر!";
+                        return;
+                    }
+                    const exists = await db.collection("family").where("username", "==", username).get();
+                    if (!exists.empty) {
+                        msg.style.color = "red";
+                        msg.textContent = "اسم ولي الأمر مسجل بالفعل!";
+                        return;
+                    }
+                    await db.collection("family").add({ username, password, studentName, createdAt: new Date() });
+                } else if (role === "مدرس") {
+                    const teacherGrades = document.getElementById("newAccTeacherGrades").value.trim() || "الكل";
+                    const exists = await db.collection("teachers").where("username", "==", username).get();
+                    if (!exists.empty) {
+                        msg.style.color = "red";
+                        msg.textContent = "اسم المدرس مسجل بالفعل!";
+                        return;
+                    }
+                    await db.collection("teachers").add({ username, password, grade: teacherGrades, createdAt: new Date() });
+                }
+
+                msg.style.color = "green";
+                msg.textContent = `تم إضافة حساب (${role}: ${username}) بنجاح!`;
+                document.getElementById("newAccUsername").value = "";
+                document.getElementById("newAccPassword").value = "";
+                document.getElementById("newAccStudentName").value = "";
+            } catch (e) {
+                msg.style.color = "red";
+                msg.textContent = "حدث خطأ أثناء حفظ الحساب في فايربيس.";
+            }
         };
 
         function renderScheduleForGrade(grade, targetBodyId) {
@@ -474,6 +594,9 @@
             if (pageId === "teacherMainMenu") document.getElementById("teacherMainMenu").style.display = "block";
             else {
                 document.getElementById(pageId).style.display = "block";
+                if (pageId === 'pageManagerAddAccount') {
+                    document.getElementById("newAccMsg").textContent = "";
+                }
                 if (pageId === 'pageManagerAnnouncements') {
                     document.getElementById("announcementSaveMsg").textContent = "";
                     loadCenterAnnouncement();
@@ -485,7 +608,6 @@
             }
         }
 
-        // دوال معاينة الواجهات الخاصة بمطورة السيستم
         window.previewStudentAsDev = function() {
             loggedInStudentGrade = "الصف الأول الإعدادي";
             document.getElementById("studentDisplayName").textContent = "معاينة طالب (رزان)";
@@ -518,7 +640,6 @@
             showTeacherPage('teacherMainMenu');
         };
 
-        // تسجيل الخروج ومسح الجلسة المحفوظة
         window.logoutUser = function() {
             localStorage.removeItem(SESSION_KEY);
             isDeveloperMode = false;
@@ -548,7 +669,6 @@
         };
         initTeacherExamBuilder();
 
-        // الدالة الموحدة لتسجيل الدخول (تستخدم عند الضغط على الزر أو عند الاستعادة التلقائية)
         async function performLogin(selectedRole, enteredUsername, enteredPassword, isAutoRestore = false) {
             if (!enteredUsername || !enteredPassword) {
                 if (!isAutoRestore) errorMsg.textContent = "أدخل اسم المستخدم وكلمة المرور!";
@@ -571,6 +691,7 @@
                     document.getElementById("devQuickSwitcher").style.display = "block";
                     document.getElementById("cardTeacherCheckin").style.display = "block";
                     document.getElementById("cardExamBuilder").style.display = "block";
+                    document.getElementById("cardManagerAddAccount").style.display = "block";
                     document.getElementById("cardManagerAnnouncements").style.display = "block";
                     document.getElementById("cardManagerAttendanceLog").style.display = "block";
                     document.getElementById("cardManagerAbsenceLog").style.display = "block";
@@ -605,6 +726,7 @@
                         document.getElementById("panelRoleTitle").textContent = "لوحة المدير";
                         document.getElementById("cardTeacherCheckin").style.display = "none";
                         document.getElementById("cardExamBuilder").style.display = "none";
+                        document.getElementById("cardManagerAddAccount").style.display = "block";
                         document.getElementById("cardManagerAnnouncements").style.display = "block";
                         document.getElementById("cardManagerAttendanceLog").style.display = "block";
                         document.getElementById("cardManagerAbsenceLog").style.display = "block";
@@ -614,6 +736,7 @@
                         document.getElementById("panelRoleTitle").textContent = "لوحة المعلم";
                         document.getElementById("cardTeacherCheckin").style.display = "block";
                         document.getElementById("cardExamBuilder").style.display = "block";
+                        document.getElementById("cardManagerAddAccount").style.display = "none";
                         document.getElementById("cardManagerAnnouncements").style.display = "none";
                         document.getElementById("cardManagerAttendanceLog").style.display = "none";
                         document.getElementById("cardManagerAbsenceLog").style.display = "none";
@@ -682,7 +805,6 @@
             performLogin(selectedRole, enteredUsername, enteredPassword, false);
         });
 
-        // استعادة الجلسة تلقائياً عند فتح الرابط أو مسح الـ QR Code
         window.addEventListener("DOMContentLoaded", () => {
             const saved = localStorage.getItem(SESSION_KEY);
             if (saved) {
